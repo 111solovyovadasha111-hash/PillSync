@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37628.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PillSync.Api", "PillSync.Api\PillSync.Api.csproj", "{BB1E39B2-94B2-4E1B-A7B7-3FE130B2297B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB1E39B2-94B2-4E1B-A7B7-3FE130B2297B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB1E39B2-94B2-4E1B-A7B7-3FE130B2297B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB1E39B2-94B2-4E1B-A7B7-3FE130B2297B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB1E39B2-94B2-4E1B-A7B7-3FE130B2297B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DBE21DB8-4754-467F-B3D9-DC4EEEF798F5}
+	EndGlobalSection
+EndGlobal
