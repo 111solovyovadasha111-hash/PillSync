@@ -5,15 +5,16 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PillSync.Api.Models;
+using PillSync.Api.Ai;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Регистрируем контроллеры (для будущих наших контроллеров)
+// 1. Контроллеры
 builder.Services.AddControllers();
 
+// 2. Identity
 builder.Services.AddIdentityCore<AppUser>(options =>
     {
-        // Настройки паролей (чтобы было не слишком сложно для тестов)
         options.Password.RequireDigit = false;
         options.Password.RequireLowercase = false;
         options.Password.RequireUppercase = false;
@@ -22,16 +23,14 @@ builder.Services.AddIdentityCore<AppUser>(options =>
     })
     .AddEntityFrameworkStores<IdentityDbContext<AppUser>>();
 
-// ВРЕМЕННЫЙ DbContext для Identity (потом Амалия заменит его на свой)
 builder.Services.AddDbContext<IdentityDbContext<AppUser>>(options =>
     options.UseInMemoryDatabase("DevDb"));
 
 builder.Services.AddEndpointsApiExplorer();
 
-// 2. Swagger
+// 3. Swagger
 builder.Services.AddSwaggerGen(options =>
 {
-    // 1. Описываем схему безопасности (Bearer токен)
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -42,27 +41,22 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Вставь сюда свой JWT токен (без слова Bearer)."
     });
 
-    // 2. Применяем эту схему ко всем методам (чтобы появились замочки)
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             new List<string>()
         }
     });
 });
 
-// 3. Health-checks (проверка, что сервер жив)
+// 4. Health
 builder.Services.AddHealthChecks();
 
-// 4. JWT (пока с dev-ключом из конфига)
+// 5. JWT
 var jwtKey = builder.Configuration["Jwt:Key"] 
              ?? "DEV_ONLY_SECRET_KEY_CHANGE_ME_1234567890_ABCDEF";
 
@@ -83,16 +77,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// 5. CORS (чтобы Blazor-клиент Светы мог достучаться до API)
+// 6. CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+// 7. Дашин код (AI)
+builder.Services.AddScoped<IYandexAiClient, MockYandexAiClient>();
+
 var app = builder.Build();
 
-// --- Конвейер middleware ---
+// Конвейер
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
