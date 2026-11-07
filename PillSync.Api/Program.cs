@@ -1,30 +1,106 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using PillSync.Api.Models;
 using PillSync.Api.Ai;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// 1. РљРѕРЅС‚СЂРѕР»Р»РµСЂС‹
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-// потом мок заменить на нормальный YandexAiClient()
+// 2. Identity
+builder.Services.AddIdentityCore<AppUser>(options =>
+    {
+        options.Password.RequireDigit = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 6;
+    })
+    .AddEntityFrameworkStores<IdentityDbContext<AppUser>>();
+
+builder.Services.AddDbContext<IdentityDbContext<AppUser>>(options =>
+    options.UseInMemoryDatabase("DevDb"));
+
+builder.Services.AddEndpointsApiExplorer();
+
+// 3. Swagger
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Р’СЃС‚Р°РІСЊ СЃСЋРґР° СЃРІРѕР№ JWT С‚РѕРєРµРЅ (Р±РµР· СЃР»РѕРІР° Bearer)."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new List<string>()
+        }
+    });
+});
+
+// 4. Health
+builder.Services.AddHealthChecks();
+
+// 5. JWT
+var jwtKey = builder.Configuration["Jwt:Key"] 
+             ?? "DEV_ONLY_SECRET_KEY_CHANGE_ME_1234567890_ABCDEF";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "PillSync",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "PillSync",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// 6. CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
+// 7. Р”Р°С€РёРЅ РєРѕРґ (AI)
 builder.Services.AddScoped<IYandexAiClient, MockYandexAiClient>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// РљРѕРЅРІРµР№РµСЂ
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
+app.UseCors();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
