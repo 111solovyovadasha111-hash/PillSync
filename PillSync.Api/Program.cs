@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PillSync.Api.Models;
 using PillSync.Api.Ai;
+using PillSync.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,12 +22,13 @@ builder.Services.AddIdentityCore<AppUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 6;
     })
-    .AddEntityFrameworkStores<IdentityDbContext<AppUser>>();
-
-builder.Services.AddDbContext<IdentityDbContext<AppUser>>(options =>
-    options.UseInMemoryDatabase("DevDb"));
+    .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 3. Swagger
 builder.Services.AddSwaggerGen(options =>
