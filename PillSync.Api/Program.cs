@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using PillSync.Api.Models;
 using PillSync.Api.Ai;
 using PillSync.Api.Data;
+using PillSync.Api.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,7 +88,27 @@ builder.Services.AddCors(options =>
 });
 
 // 7. Дашин код (AI)
-builder.Services.AddScoped<IYandexAiClient, MockYandexAiClient>();
+builder.Services.Configure<YandexAiOptions>(
+    builder.Configuration.GetSection(YandexAiOptions.SectionName));
+
+var ai = builder.Configuration.GetSection(YandexAiOptions.SectionName).Get<YandexAiOptions>() ?? new();
+
+if (ai.UseMock)
+{
+    builder.Services.AddScoped<IYandexAiClient, MockYandexAiClient>();
+}
+else
+{
+    builder.Services.AddHttpClient<IYandexAiClient, YandexFoundationModelsClient>((sp, http) =>
+    {
+        var o = sp.GetRequiredService<IOptions<YandexAiOptions>>().Value;
+        http.BaseAddress = new Uri(o.BaseUrl);
+        http.Timeout = TimeSpan.FromSeconds(o.TimeoutSeconds);
+        http.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Api-Key", o.ApiKey);
+        http.DefaultRequestHeaders.Add("x-folder-id", o.FolderId);
+    });
+}
 
 var app = builder.Build();
 
