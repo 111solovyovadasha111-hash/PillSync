@@ -9,7 +9,7 @@ using PillSync.Api.Data;
 namespace PillSync.Api.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize] 
 [Route("api/ai")]
 public class AiController(
     AppDbContext db,
@@ -58,6 +58,34 @@ public class AiController(
             log.LogWarning(ex, "AI check failed");
             return StatusCode(StatusCodes.Status502BadGateway,
                 new { error = "Сервис проверки временно недоступен. Попробуйте позже." });
+        }
+    }
+
+
+    // тест на нейронку
+    [HttpPost("test-ai-direct")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> TestAiDirect(CancellationToken ct)
+    {
+        // Создаем тестовый запрос напрямую, без базы данных
+        var aiRequest = new InteractionCheckRequest(
+        [
+            new MedicationInput("Эликвис", "Апиксабан", "5", "мг"),
+            new MedicationInput("Кардиомагнил", "Ацетилсалициловая кислота + Магния гидроксид", "75", "мг"),
+            new MedicationInput("Клопидогрел", "Клопидогрел", "75", "мг"),
+            new MedicationInput("Кеторол экспресс", "Кеторолак", "10", "мг")
+        ]);
+
+        try
+        {
+            // Напрямую дергаем YandexGPT через ваш клиент
+            var result = await ai.CheckInteractionsAsync(aiRequest, ct);
+            return Ok(result);
+        }
+        catch (AiUnavailableException ex)
+        {
+            log.LogWarning(ex, "AI check failed");
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
         }
     }
 }
