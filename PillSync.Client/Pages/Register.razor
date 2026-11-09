@@ -1,0 +1,76 @@
+@page "/register"
+@using PillSync.Client.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <div class="card shadow-sm p-4" style="max-width: 400px; margin: auto;">
+        <h2 class="text-center mb-4">Регистрация</h2>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input @bind="model.Email" class="form-control" type="email" placeholder="name@example.com" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Пароль</label>
+            <input @bind="model.Password" class="form-control" type="password" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Подтвердите пароль</label>
+            <input @bind="model.ConfirmPassword" class="form-control" type="password" />
+        </div>
+
+        <button class="btn btn-primary w-100" @onclick="HandleRegister" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm"></span> <span>Регистрация...</span>
+            }
+            else
+            {
+                <span>Создать аккаунт</span>
+            }
+        </button>
+    </div>
+</div>
+
+@code {
+    private RegisterModel model = new();
+    private bool isLoading = false;
+    private string? errorMessage;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Здесь мы отправляем данные на сервер (Разработчик 2 должен подготовить этот путь)
+            var response = await Http.PostAsJsonAsync("api/auth/register", model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Nav.NavigateTo("/login"); // Если всё ок, идем на вход
+            }
+            else
+            {
+                errorMessage = "Ошибка регистрации. Возможно, такой email уже занят.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Не удалось связаться с сервером.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

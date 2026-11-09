@@ -1,0 +1,47 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">PillSync</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Главная
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="login">
+                <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Вход
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="register">
+                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Регистрация
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="medications">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Препараты
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="analyses">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Анализы
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="ai-check">
+                <span class="bi bi-cpu-fill-nav-menu" aria-hidden="true"></span> AI-разбор
+            </NavLink>
+        </div>
+    </nav>
+</div>
