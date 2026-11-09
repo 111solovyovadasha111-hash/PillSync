@@ -4,11 +4,12 @@ namespace PillSync.Api.Ai.Dto;
 public record MedicationInput(
     string Name,
     string? ActiveIngredient,
-    decimal? Dose,
+    string? Dose,
     string? DoseUnit);
 
 // сервер берет userId из JWT
 public record InteractionCheckRequest(IReadOnlyList<MedicationInput> Medications);
+public record InteractionCheckByIdsRequest(IReadOnlyList<int> MedicationIds);
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum InteractionSeverity { None, Minor, Moderate, Major }
