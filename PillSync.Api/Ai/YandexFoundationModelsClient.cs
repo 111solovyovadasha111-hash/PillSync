@@ -107,7 +107,7 @@ public class YandexFoundationModelsClient : IYandexAiClient
 
             var result = ParseResult(raw, request, out var problem);
             if (problem is not null)
-                _log.LogWarning("Ответ ИИ отклонён: {Problem}", problem);   // сырой ответ не логируем: там данные пользователя
+                _log.LogWarning("Ответ ИИ отклонён: {Problem}", problem); 
             return result;
         }
     }
@@ -140,7 +140,7 @@ public class YandexFoundationModelsClient : IYandexAiClient
             return InteractionCheckResult.Insufficient();
         }
 
-        // 2. JSON модели (может быть в ```json или с текстом вокруг)
+        // обработка корявого json разметки
         var start = text.IndexOf('{');
         var end = text.LastIndexOf('}');
         if (start < 0 || end <= start)
@@ -157,13 +157,15 @@ public class YandexFoundationModelsClient : IYandexAiClient
             return InteractionCheckResult.Insufficient();
         }
 
+
+        // ии решила, что у нее недостаточно данных для анализа
         if (parsed is null || string.Equals(parsed.Status, "insufficient_data", StringComparison.OrdinalIgnoreCase))
         {
             problem = "модель сообщила о недостатке данных";
             return InteractionCheckResult.Insufficient();
         }
 
-        // 3. Названия из ответа должны совпадать с теми, что мы отправили (защита от выдумок)
+        // Названия из ответа должны совпадать с теми, что мы отправили (защита от выдумок)
         var canon = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var m in request.Medications)
         {
@@ -189,7 +191,7 @@ public class YandexFoundationModelsClient : IYandexAiClient
             interactions.Add(i with { DrugA = a, DrugB = b });
         }
 
-        // 4. Расписание: ровно одна запись на каждый введённый препарат
+        // Расписание: ровно одна запись на каждый введённый препарат
         var schedule = new List<IntakeScheduleItem>();
         for (var n = 0; n < request.Medications.Count; n++)
         {
