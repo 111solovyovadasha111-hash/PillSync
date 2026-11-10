@@ -12,7 +12,18 @@ public record InteractionCheckRequest(IReadOnlyList<MedicationInput> Medications
 public record InteractionCheckByIdsRequest(IReadOnlyList<int> MedicationIds);
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum InteractionSeverity { None, Minor, Moderate, Major }
+public enum InteractionSeverity {
+    None,
+    Minor,
+    Moderate,
+    Major
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum CheckStatus {
+    Completed,
+    InsufficientData
+}
 
 public record DrugInteraction(
     string DrugA,
@@ -34,4 +45,13 @@ public record InteractionCheckResult(
         "Информация носит справочный характер и не является медицинской рекомендацией. Проконсультируйтесь с врачом.";
 
     public string Disclaimer { get; init; } = DisclaimerText;
+    public CheckStatus Status { get; init; } = CheckStatus.Completed;
+    public string? Message { get; init; }
+
+    public static InteractionCheckResult Insufficient(string? message = null) => new([], [])
+    {
+        Status = CheckStatus.InsufficientData,
+        Message = message ??
+            "Недостаточно данных для оценки совместимости. Проконсультируйтесь с врачом или фармацевтом."
+    };
 }

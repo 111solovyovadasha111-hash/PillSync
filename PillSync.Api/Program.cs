@@ -99,6 +99,9 @@ if (ai.UseMock)
 }
 else
 {
+    if (string.IsNullOrWhiteSpace(ai.ApiKey) || string.IsNullOrWhiteSpace(ai.FolderId))
+        throw new InvalidOperationException("YandexAi:ApiKey и YandexAi:FolderId обязательны при UseMock=false");
+
     builder.Services.AddHttpClient<IYandexAiClient, YandexFoundationModelsClient>((sp, http) =>
     {
         var o = sp.GetRequiredService<IOptions<YandexAiOptions>>().Value;
