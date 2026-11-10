@@ -62,9 +62,9 @@ public class AiController(
     }
 
 
-    // тест на нейронку
+    //// тест на нейронку
     [HttpPost("test-ai-direct")]
-    [AllowAnonymous] 
+    [AllowAnonymous]
     public async Task<IActionResult> TestAiDirect(CancellationToken ct)
     {
         // Создаем тестовый запрос напрямую, без базы данных
@@ -88,4 +88,32 @@ public class AiController(
             return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
         }
     }
+
+
+    // тестовый тест, существует только в debug сборке
+#if DEBUG
+    [HttpGet("dev/test-ai")]
+    [AllowAnonymous]
+    public async Task<IActionResult> TestAi(
+        [FromQuery] string scenario, [FromServices] IWebHostEnvironment env, CancellationToken ct)
+    {
+        if (!env.IsDevelopment()) return NotFound();
+
+        MedicationInput M(string n, string? ai = null) => new(n, ai, null, null);
+
+        var meds = scenario switch
+        {
+            "pair" => new[] { M("Симвастатин"), M("Кларитромицин") },      // ожидаем Major/Moderate
+            "none" => new[] { M("Парацетамол"), M("Аскорбиновая кислота") }, // ожидаем пусто
+            "three" => new[] { M("Дигоксин"), M("Амиодарон"), M("Омепразол") },
+            "unknown" => new[] { M("Блаблаол"), M("Аспирин") },                // ожидаем InsufficientData
+            "one" => new[] { M("Аспирин") },
+            _ => null
+        };
+        if (meds is null) return BadRequest("pair | none | three | unknown | one");
+
+        try { return Ok(await ai.CheckInteractionsAsync(new InteractionCheckRequest(meds), ct)); }
+        catch (AiUnavailableException ex) { return StatusCode(502, new { error = ex.Message }); }
+    }
+#endif
 }
