@@ -1,6 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using PillSync.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PillSync.Api.Data;
+using PillSync.Api.Models;
 
 namespace PillSync.Api.Controllers;
 
@@ -10,8 +12,13 @@ namespace PillSync.Api.Controllers;
 public class MedicationsController : ControllerBase
 {
     // Временное хранилище в памяти (потом Амалия заменит на базу данных)
-    private static readonly List<Medication> _medications = new();
-    
+    private readonly AppDbContext _context;
+
+    public MedicationsController(AppDbContext context)
+    {
+        _context = context;
+    }
+
     private string? GetCurrentUserId()
     {
         // Ищем в токене (в контексте запроса) Claim с типом NameIdentifier.
@@ -21,26 +28,38 @@ public class MedicationsController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Medication>> GetAll()
+    public async Task<ActionResult<IEnumerable<Medication>>> GetAll()
     {
         var userId = GetCurrentUserId();
-        if (userId == null) return Unauthorized(); // Если токена нет
-        var userMedications = _medications.Where(m => m.UserId == userId).ToList();
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var userMedications = await _context.Medications
+            .Where(m => m.UserId == userId)
+            .ToListAsync();
+
         return Ok(userMedications);
     }
 
     [HttpPost]
-    public ActionResult<Medication> Create([FromBody] Medication medication)
+    public async Task<ActionResult<Medication>> Create(
+        [FromBody] Medication medication)
     {
-        // ВАЖНО: ID пользователя берем с сервера, а не из присланного JSON!
-        medication.UserId = GetCurrentUserId();
-        
-        // Генерируем простой ID
-        medication.Id = _medications.Count > 0 ? _medications.Max(m => m.Id) + 1 : 1;
-        
-        _medications.Add(medication);
-        
-        // Возвращаем созданный объект
+        var userId = GetCurrentUserId();
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        // ID назначит база данных при сохранении.
+        medication.Id = 0;
+
+        // Пользователя берём из JWT, а не из присланного JSON.
+        medication.UserId = userId;
+
+        _context.Medications.Add(medication);
+        await _context.SaveChangesAsync();
+
         return Ok(medication);
     }
 }
