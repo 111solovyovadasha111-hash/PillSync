@@ -60,8 +60,17 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddHealthChecks();
 
 // 5. JWT
-var jwtKey = builder.Configuration["Jwt:Key"] 
-             ?? "DEV_ONLY_SECRET_KEY_CHANGE_ME_1234567890_ABCDEF";
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("Критическая ошибка: Jwt:Key не задан в конфигурации! Приложение не может безопасно работать.");
+    }
+
+    jwtKey = "DEV_ONLY_SECRET_KEY_CHANGE_ME_1234567890_ABCDEF";
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
